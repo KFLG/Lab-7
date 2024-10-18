@@ -1,4 +1,4 @@
-import unalib from '../unalib/index';
+import { is_valid_phone, validateMessage } from '../unalib/index.js';
 import assert from 'assert';
 
 // Pruebas
