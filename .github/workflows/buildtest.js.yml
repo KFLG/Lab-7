@@ -87,5 +87,5 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: UNA-CHAT  # Cambia esto por el nombre de tu aplicación en Azure
+          app-name: unachatt  # Cambia esto por el nombre de tu aplicación en Azure
           images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
