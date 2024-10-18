@@ -69,3 +69,23 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
+
+        # Job 4: Deploy to Azure Web App
+  deploy:
+    needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: UNA-CHAT  # Cambia esto por el nombre de tu aplicación en Azure
+          images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
