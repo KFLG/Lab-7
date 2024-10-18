@@ -1,5 +1,5 @@
-var unalib = require('../unalib/index');
-var assert = require('assert');
+import unalib from '../unalib/index';
+import assert from 'assert';
 
 // Pruebas
 describe('unalib validation tests', function() {
