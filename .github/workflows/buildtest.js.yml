@@ -86,7 +86,7 @@ jobs:
       - name: Scan Docker image with Trivy
         run: trivy image ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
 
-  # Job 6: CodeQL (SAST - Static Code Analysis)
+  # Job 5: CodeQL (SAST - Static Code Analysis)
   codeql:
     runs-on: ubuntu-latest
     permissions:
