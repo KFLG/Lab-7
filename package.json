@@ -4,6 +4,7 @@
   "description": "Proyecto combinado de Okta OIDC con Socket.IO",
   "main": "server.js",
   "dependencies": {
+    "@eslint/eslintrc": "^3.1.0",
     "@okta/oidc-middleware": "0.0.6",
     "consolidate": "^0.15.1",
     "env-cmd": "^10.1.0",

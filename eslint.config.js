@@ -1,13 +1,21 @@
+import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
+
+// Inicializa compatibilidad
+const compat = new FlatCompat({
+  recommendedConfig: js.configs.recommended, // Configuración recomendada moderna
+  allConfig: js.configs.all,
+});
 
 export default [
   {
     ignores: ['node_modules'],
   },
-  js.configs.recommended, // Configuración recomendada de ESLint para JS
+  // Uso de compatibilidad para extender configuraciones antiguas
+  ...compat.extends('eslint:recommended'),
   {
     rules: {
-      'no-unused-vars': 'warn', // Reglas personalizadas
+      'no-unused-vars': 'warn',
       'no-console': 'off',
     },
   },
