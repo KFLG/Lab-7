@@ -79,8 +79,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.36.0_Linux-64bit.deb
-          sudo dpkg -i trivy_0.36.0_Linux-64bit.deb
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.56.2_Linux-64bit.deb  # Actualiza esta línea a la versión correcta
+          sudo dpkg -i trivy_0.56.2_Linux-64bit.deb
           trivy --version  # Verifica la instalación
 
       - name: Scan Docker image with Trivy
