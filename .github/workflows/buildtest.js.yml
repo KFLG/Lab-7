@@ -1,4 +1,4 @@
-name: Build, Test, and Deploy to Docker Hub
+name: Build, Test, Lint, SAST, and Deploy
 
 on:
   push:
@@ -24,11 +24,52 @@ jobs:
         run: npm install
 
       - name: Build project
-        run: npm run build --if-present  # Si tienes un proceso de build en tu proyecto
+        run: npm run build --if-present
 
-  # Job 2: Test
+  # Job 2: Linting
+  lint:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install ESLint
+        run: npm install eslint
+
+      - name: Run ESLint
+        run: npx eslint .  # Puedes especificar rutas si es necesario
+
+  # Job 3: SAST with CodeQL
+  codeql:
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write  # Para reportar vulnerabilidades
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  # Job 4: Test
   test:
-    needs: build  # Esto asegura que el test solo se ejecute si el build fue exitoso
+    needs: codeql
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -43,16 +84,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Paso adicional: Otorgar permisos a Mocha si lo necesitas
-      - name: Grant permission to Mocha
-        run: chmod +x ./node_modules/.bin/mocha
-
       - name: Run tests
         run: npm test
 
-  # Job 3: Docker Delivery
+  # Job 5: Docker Delivery
   delivery:
-    needs: test  # Esto asegura que el job de delivery solo se ejecute después de que el test sea exitoso
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -69,3 +106,23 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
+
+  # Job 6: Deploy to Azure Web App
+  deploy:
+    needs: delivery
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: unachatt  # Cambia esto por el nombre de tu aplicación en Azure
+          images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
