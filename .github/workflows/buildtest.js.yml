@@ -86,18 +86,23 @@ jobs:
       - name: Scan Docker image with Trivy
         run: trivy image ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
 
-  # Job 5: CodeQL Analysis
+  # Job 6: CodeQL (SAST - Static Code Analysis)
   codeql:
-    name: Analyze
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      security-events: write
+    strategy:
+      matrix:
+        language: [ 'javascript' ]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
-          languages: javascript  # Cambia esto según el lenguaje de tu proyecto
+          languages: ${{ matrix.language }}
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
