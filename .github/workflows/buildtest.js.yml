@@ -129,3 +129,44 @@ jobs:
         with:
           app-name: unachatt  # Cambia esto por el nombre de tu aplicación en Azure
           images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
+
+  # Job 7: Deploy to Staging Environment
+  staging:
+    needs: deploy  # Asegura que este job solo se ejecute después de que el trabajo 'deploy' se complete con éxito.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Staging Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: unachatt-staging  # Cambia esto por el nombre de tu aplicación en el entorno de staging
+          images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
+
+  # Job 8: Run Nuclei Scanning
+  nuclei:
+    needs: staging  # Asegura que el escaneo de Nuclei se ejecute después de que el despliegue en staging se complete con éxito.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Nuclei
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_2.7.8_linux_amd64.zip  # Actualiza a la versión correcta
+          unzip nuclei_2.7.8_linux_amd64.zip
+          sudo mv nuclei /usr/local/bin/
+          nuclei -version  # Verifica la instalación
+
+      - name: Run Nuclei scans
+        run: |
+          nuclei -u https://<your-staging-url> -t <path-to-your-templates>  # Reemplaza con la URL de tu entorno de staging y la ruta a tus plantillas de Nuclei
