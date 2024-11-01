@@ -106,7 +106,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-            # Job 6: Deploy to Railway
+        # Job 6: Deploy to Railway
   deploy:
     needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
     runs-on: ubuntu-latest
@@ -129,7 +129,7 @@ jobs:
 
       # Desplegar la aplicación a Railway
       - name: Deploy to Railway
-        run: railway up --detach  # Levanta la aplicación en Railway y se asegura de que no bloquee la acción
+        run: railway up --detach --project ${{ secrets.RAILWAY_PROJECT_ID }}  # Asegúrate de que el ID del proyecto esté en los secretos
 
 
   # Job 7: Nuclei Scanning (post-deploy)
