@@ -142,4 +142,4 @@ jobs:
 
       - name: Run Nuclei scans
         run: |
-          nuclei -u https://<your-netlify-url> -t <path-to-your-templates>  # Reemplaza con la URL de tu app en Netlify y la ruta a tus plantillas de Nuclei
+          nuclei -u https://unrivaled-sprite-6bae6d.netlify.app/ -t nuclei-templates/
