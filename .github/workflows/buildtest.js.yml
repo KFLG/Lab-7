@@ -108,28 +108,19 @@ jobs:
 
         # Job 6: Deploy to Railway
   deploy:
-    needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Instalar Railway CLI
-      - name: Install Railway CLI
-        run: |
-          curl -fsSL https://railway.app/install.sh | sh
-          export PATH="$HOME/.railway/bin:$PATH"
+      - name: Set up Railway
+        run: echo "$RAILWAY_TOKEN" > ~/.railway/token  # Asegúrate de que el token esté definido en los secretos
 
-      # Crear el directorio .railway si no existe y guardar el token del proyecto
-      - name: Set Railway Project Token
-        run: |
-          mkdir -p ~/.railway
-          echo "${{ secrets.RAILWAY_PROJECT_TOKEN }}" > ~/.railway/token
-
-      # Desplegar la aplicación a Railway
       - name: Deploy to Railway
-        run: railway up --detach --project ${{ secrets.RAILWAY_PROJECT_ID }}  # Asegúrate de que el ID del proyecto esté en los secretos
+        run: railway up --detach
+        env:
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}  # Asegúrate de que el Project ID esté en los secretos
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}  # Asegúrate de que el token esté en los secretos
 
 
   # Job 7: Nuclei Scanning (post-deploy)
