@@ -106,7 +106,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-    # Job 6: Deploy to Railway
+      # Job 6: Deploy to Railway
   deploy:
     needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
     runs-on: ubuntu-latest
@@ -121,9 +121,11 @@ jobs:
           curl -fsSL https://railway.app/install.sh | sh
           export PATH="$HOME/.railway/bin:$PATH"
 
-      # Log in to Railway using the token
+      # Crear el directorio .railway si no existe y guardar el token
       - name: Set Railway Token
-        run: echo "${{ secrets.RAILWAY_TOKEN }}" > ~/.railway/token
+        run: |
+          mkdir -p ~/.railway
+          echo "${{ secrets.RAILWAY_TOKEN }}" > ~/.railway/token
 
       # Desplegar la aplicación a Railway
       - name: Deploy to Railway
