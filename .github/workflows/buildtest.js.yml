@@ -1,4 +1,4 @@
-name: Build, Test, and Deploy to Docker Hub
+name: Build, Test, and Deploy to Railway
 
 on:
   push:
@@ -42,10 +42,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      # Paso adicional: Otorgar permisos a Mocha si lo necesitas
-      - name: Grant permission to Mocha
-        run: chmod +x ./node_modules/.bin/mocha
 
       - name: Run tests
         run: npm test
@@ -110,7 +106,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  # Job 6: Deploy to Azure Web App
+  # Job 6: Deploy to Railway
   deploy:
     needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
     runs-on: ubuntu-latest
@@ -119,40 +115,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      # Log in to Railway using Railway CLI
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          export PATH="$HOME/.railway/bin:$PATH"
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: unachatt  # Cambia esto por el nombre de tu aplicación en Azure
-          images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
+      - name: Log in to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway login --token $RAILWAY_TOKEN
 
-  # Job 7: Deploy to Staging Environment
-  staging:
-    needs: deploy  # Asegura que este job solo se ejecute después de que el trabajo 'deploy' se complete con éxito.
-    runs-on: ubuntu-latest
+      # Deploy the Docker image to Railway
+      - name: Deploy to Railway
+        run: |
+          railway init  # Inicia un proyecto de Railway si no se ha hecho
+          railway up --detach  # Levanta la aplicación en Railway y se asegura de que no se bloquee la acción
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Staging Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: unachatt-staging  # Cambia esto por el nombre de tu aplicación en el entorno de staging
-          images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
-
-  # Job 8: Run Nuclei Scanning
+  # Job 7: Nuclei Scanning (post-deploy)
   nuclei:
-    needs: staging  # Asegura que el escaneo de Nuclei se ejecute después de que el despliegue en staging se complete con éxito.
+    needs: deploy  # Asegura que el escaneo de Nuclei se ejecute después de que el despliegue en Railway se complete con éxito.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -169,4 +151,4 @@ jobs:
 
       - name: Run Nuclei scans
         run: |
-          nuclei -u https://<your-staging-url> -t <path-to-your-templates>  # Reemplaza con la URL de tu entorno de staging y la ruta a tus plantillas de Nuclei
+          nuclei -u https://<your-railway-url> -t <path-to-your-templates>  # Reemplaza con la URL de tu app en Railway y la ruta a tus plantillas de Nuclei
