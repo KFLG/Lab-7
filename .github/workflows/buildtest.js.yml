@@ -1,4 +1,4 @@
-name: Build, Test, and Deploy to Railway
+name: Build, Test, and Deploy to Netlify
 
 on:
   push:
@@ -106,26 +106,26 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-        # Job 6: Deploy to Railway
+  # Job 6: Deploy to Netlify
   deploy:
+    needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Railway
-        run: echo "$RAILWAY_TOKEN" > ~/.railway/token  # Asegúrate de que el token esté definido en los secretos
+      - name: Set up Netlify CLI
+        run: npm install -g netlify-cli  # Instalar Netlify CLI
 
-      - name: Deploy to Railway
-        run: railway up --detach
+      - name: Deploy to Netlify
+        run: netlify deploy --prod --dir=build  # Cambia 'build' a la carpeta de salida de tu proyecto
         env:
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}  # Asegúrate de que el Project ID esté en los secretos
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}  # Asegúrate de que el token esté en los secretos
-
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}  # Asegúrate de que el token esté en los secretos
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}  # Asegúrate de que el Site ID esté en los secretos
 
   # Job 7: Nuclei Scanning (post-deploy)
   nuclei:
-    needs: deploy  # Asegura que el escaneo de Nuclei se ejecute después de que el despliegue en Railway se complete con éxito.
+    needs: deploy  # Asegura que el escaneo de Nuclei se ejecute después de que el despliegue en Netlify se complete con éxito.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -142,4 +142,4 @@ jobs:
 
       - name: Run Nuclei scans
         run: |
-          nuclei -u https://<your-railway-url> -t <path-to-your-templates>  # Reemplaza con la URL de tu app en Railway y la ruta a tus plantillas de Nuclei
+          nuclei -u https://<your-netlify-url> -t <path-to-your-templates>  # Reemplaza con la URL de tu app en Netlify y la ruta a tus plantillas de Nuclei
