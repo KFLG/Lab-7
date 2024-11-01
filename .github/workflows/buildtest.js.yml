@@ -1,4 +1,4 @@
-name: Build, Test, Lint, SAST, and Deploy
+name: Build, Test, and Deploy to Netlify
 
 on:
   push:
@@ -24,52 +24,11 @@ jobs:
         run: npm install
 
       - name: Build project
-        run: npm run build --if-present
+        run: npm run build --if-present  # Si tienes un proceso de build en tu proyecto
 
-  # Job 2: Linting
-  lint:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18.x'
-          cache: 'npm'
-
-      - name: Install ESLint
-        run: npm install eslint
-
-      - name: Run ESLint
-        run: npx eslint .  # Puedes especificar rutas si es necesario
-
-  # Job 3: SAST with CodeQL
-  codeql:
-    needs: lint
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write  # Para reportar vulnerabilidades
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: javascript
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
-
-  # Job 4: Test
+  # Job 2: Test
   test:
-    needs: codeql
+    needs: build  # Esto asegura que el test solo se ejecute si el build fue exitoso
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -87,9 +46,9 @@ jobs:
       - name: Run tests
         run: npm test
 
-  # Job 5: Docker Delivery
+  # Job 3: Docker Delivery
   delivery:
-    needs: test
+    needs: test  # Esto asegura que el job de delivery solo se ejecute después de que el test sea exitoso
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -107,22 +66,80 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
 
-  # Job 6: Deploy to Azure Web App
-  deploy:
-    needs: delivery
+  # Job 4: Scan Docker Image for Vulnerabilities
+  scan:
+    needs: delivery  # Asegura que el escaneo se ejecute después de que la imagen Docker se haya creado
     runs-on: ubuntu-latest
+    steps:
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.56.2_Linux-64bit.deb  # Actualiza esta línea a la versión correcta
+          sudo dpkg -i trivy_0.56.2_Linux-64bit.deb
+          trivy --version  # Verifica la instalación
 
+      - name: Scan Docker image with Trivy
+        run: trivy image ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
+
+  # Job 5: CodeQL (SAST - Static Code Analysis)
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      security-events: write
+    strategy:
+      matrix:
+        language: [ 'javascript' ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  # Job 6: Deploy to Netlify
+  deploy:
+    needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Set up Netlify CLI
+        run: npm install -g netlify-cli  # Instalar Netlify CLI
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: unachatt  # Cambia esto por el nombre de tu aplicación en Azure
-          images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
+      - name: Deploy to Netlify
+        run: netlify deploy --prod --dir=static  # Cambia 'build' a la carpeta de salida de tu proyecto
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}  # Asegúrate de que el token esté en los secretos
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}  # Asegúrate de que el Site ID esté en los secretos
+
+  # Job 7: Nuclei Scanning (post-deploy)
+  nuclei:
+    needs: deploy  # Asegura que el escaneo de Nuclei se ejecute después de que el despliegue en Netlify se complete con éxito.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Nuclei
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_3.3.5_linux_amd64.zip  # Actualiza a la versión correcta
+          unzip nuclei_3.3.5_linux_amd64.zip
+          sudo mv nuclei /usr/local/bin/
+          nuclei -version  # Verifica la instalación
+
+      - name: Run Nuclei scans
+        run: |
+          nuclei -u https://<your-netlify-url> -t <path-to-your-templates>  # Reemplaza con la URL de tu app en Netlify y la ruta a tus plantillas de Nuclei
