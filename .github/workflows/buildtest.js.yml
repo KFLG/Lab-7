@@ -118,7 +118,7 @@ jobs:
         run: npm install -g netlify-cli  # Instalar Netlify CLI
 
       - name: Deploy to Netlify
-        run: netlify deploy --prod --dir=build  # Cambia 'build' a la carpeta de salida de tu proyecto
+        run: netlify deploy --prod --dir=static  # Cambia 'build' a la carpeta de salida de tu proyecto
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}  # Asegúrate de que el token esté en los secretos
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}  # Asegúrate de que el Site ID esté en los secretos
