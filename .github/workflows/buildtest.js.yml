@@ -106,7 +106,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  # Job 6: Deploy to Railway
+    # Job 6: Deploy to Railway
   deploy:
     needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
     runs-on: ubuntu-latest
@@ -115,21 +115,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Log in to Railway using Railway CLI
+      # Instalar Railway CLI
       - name: Install Railway CLI
         run: |
           curl -fsSL https://railway.app/install.sh | sh
           export PATH="$HOME/.railway/bin:$PATH"
 
-      - name: Log in to Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway auth $RAILWAY_TOKEN
+      # Log in to Railway using the token
+      - name: Set Railway Token
+        run: echo "${{ secrets.RAILWAY_TOKEN }}" > ~/.railway/token
 
-      # Deploy the Docker image to Railway
+      # Desplegar la aplicación a Railway
       - name: Deploy to Railway
-        run: |
-          railway up --detach  # Levanta la aplicación en Railway y se asegura de que no se bloquee la acción
+        run: railway up --detach  # Levanta la aplicación en Railway y se asegura de que no bloquee la acción
+
 
   # Job 7: Nuclei Scanning (post-deploy)
   nuclei:
