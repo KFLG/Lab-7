@@ -1,4 +1,4 @@
-name: Build, Test, and Deploy to Netlify
+name: Build, Test, and Deploy to Docker Hub
 
 on:
   push:
@@ -42,6 +42,10 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      # Paso adicional: Otorgar permisos a Mocha si lo necesitas
+      - name: Grant permission to Mocha
+        run: chmod +x ./node_modules/.bin/mocha
 
       - name: Run tests
         run: npm test
@@ -106,26 +110,49 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  # Job 6: Deploy to Netlify
+  # Job 6: Deploy to Azure Web App
   deploy:
     needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Netlify CLI
-        run: npm install -g netlify-cli  # Instalar Netlify CLI
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Netlify
-        run: netlify deploy --prod --dir=static  # Cambia 'build' a la carpeta de salida de tu proyecto
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}  # Asegúrate de que el token esté en los secretos
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}  # Asegúrate de que el Site ID esté en los secretos
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: unachatt  # Cambia esto por el nombre de tu aplicación en Azure
+          images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
 
-  # Job 7: Nuclei Scanning (post-deploy)
+  # Job 7: Deploy to Staging Environment
+  staging:
+    needs: deploy  # Asegura que este job solo se ejecute después de que el trabajo 'deploy' se complete con éxito.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Staging Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: unachatt-staging  # Cambia esto por el nombre de tu aplicación en el entorno de staging
+          images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
+
+  # Job 8: Run Nuclei Scanning
   nuclei:
-    needs: deploy  # Asegura que el escaneo de Nuclei se ejecute después de que el despliegue en Netlify se complete con éxito.
+    needs: staging  # Asegura que el escaneo de Nuclei se ejecute después de que el despliegue en staging se complete con éxito.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -135,11 +162,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget
-          wget https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_3.3.5_linux_amd64.zip  # Actualiza a la versión correcta
-          unzip nuclei_3.3.5_linux_amd64.zip
+          wget https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_2.7.8_linux_amd64.zip  # Actualiza a la versión correcta
+          unzip nuclei_2.7.8_linux_amd64.zip
           sudo mv nuclei /usr/local/bin/
           nuclei -version  # Verifica la instalación
 
       - name: Run Nuclei scans
         run: |
-          nuclei -u https://unrivaled-sprite-6bae6d.netlify.app/ -t nuclei-templates/
+          nuclei -u https://<your-staging-url> -t <path-to-your-templates>  # Reemplaza con la URL de tu entorno de staging y la ruta a tus plantillas de Nuclei
