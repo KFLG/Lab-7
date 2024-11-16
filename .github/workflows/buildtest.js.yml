@@ -152,21 +152,21 @@ jobs:
 
   # Job 8: Run Nuclei Scanning
   nuclei:
-    needs: staging  # Asegura que el escaneo de Nuclei se ejecute después de que el despliegue en staging se complete con éxito.
+    needs: staging  # Asegura que el escaneo de Nuclei se ejecute después del despliegue en staging.
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Nuclei
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget https://github.com/projectdiscovery/nuclei/releases/download/v3.3.5/nuclei_3.3.5_linux_amd64.zip
-          unzip nuclei_3.3.5_linux_amd64.zip
-          sudo mv nuclei /usr/local/bin/
-          nuclei -version  # Verifica la instalación
+    - name: Set up Nuclei
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip
+        wget https://github.com/projectdiscovery/nuclei/releases/download/v3.3.5/nuclei_3.3.5_linux_amd64.zip
+        unzip nuclei_3.3.5_linux_amd64.zip
+        sudo mv nuclei /usr/local/bin/
+        nuclei -version  # Verifica la instalación
 
-      - name: Run Nuclei scans
-        run: |
-         nuclei -u https://unachattt-staging-c9h6drg5gnf3b0ed.canadacentral-01.azurewebsites.net/ -t ./nuclei-templates
+    - name: Run Nuclei scans
+      run: |
+        nuclei -u https://unachattt-staging-c9h6drg5gnf3b0ed.canadacentral-01.azurewebsites.net/ -t ./nuclei-templates
