@@ -169,4 +169,4 @@ jobs:
 
       - name: Run Nuclei scans
         run: |
-         nuclei -u https://<your-staging-url> -t <path-to-your-templates>  # Reemplaza con la URL de tu entorno de staging y la ruta a tus plantillas de Nuclei
+         nuclei -u https://unachattt-staging-c9h6drg5gnf3b0ed.canadacentral-01.azurewebsites.net/ -t ./nuclei-templates
