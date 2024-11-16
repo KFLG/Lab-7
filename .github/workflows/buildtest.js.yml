@@ -165,12 +165,17 @@ jobs:
         wget https://github.com/projectdiscovery/nuclei/releases/download/v3.3.5/nuclei_3.3.5_linux_amd64.zip
         unzip nuclei_3.3.5_linux_amd64.zip
         sudo mv nuclei /usr/local/bin/
-        nuclei -version  # Verificar la instalación
+        nuclei -version  # Verifica la instalación
 
-    - name: List installed templates
+    - name: Download Nuclei templates
       run: |
-        ls -l /home/runner/nuclei-templates
+        git clone https://github.com/projectdiscovery/nuclei-templates.git ./nuclei-templates
+
+    - name: List downloaded templates
+      run: |
+        ls -l ./nuclei-templates
 
     - name: Run Nuclei scans
       run: |
-        nuclei -u https://unachattt-staging-c9h6drg5gnf3b0ed.canadacentral-01.azurewebsites.net/ -t /home/runner/nuclei-templates
+        nuclei -u https://unachattt-staging-c9h6drg5gnf3b0ed.canadacentral-01.azurewebsites.net/ -t ./nuclei-templates
+
