@@ -127,7 +127,7 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: unachatt  # Cambia esto por el nombre de tu aplicación en Azure
+          app-name: unachattt  # Cambia esto por el nombre de tu aplicación en Azure
           images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
 
   # Job 7: Deploy to Staging Environment
@@ -147,7 +147,7 @@ jobs:
       - name: Deploy to Staging Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: unachatt-staging  # Cambia esto por el nombre de tu aplicación en el entorno de staging
+          app-name: unachattt-staging  # Cambia esto por el nombre de tu aplicación en el entorno de staging
           images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
 
   # Job 8: Run Nuclei Scanning
