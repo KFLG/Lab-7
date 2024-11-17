@@ -114,7 +114,34 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  # Job 6: Deploy to Azure Web App
+  # Job 6: Static Code Analysis with SonarCloud
+  sonarcloud:
+    needs: codeql  # Esto asegura que SonarCloud se ejecute después del job de CodeQL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install SonarScanner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-11-jdk
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
+          unzip sonar-scanner-cli-4.8.0.2856-linux.zip
+          sudo mv sonar-scanner-4.8.0.2856-linux /usr/local/sonar-scanner
+          sudo ln -s /usr/local/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner
+
+      - name: Run SonarCloud Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=KFLG_Lab-7 \
+            -Dsonar.organization=KLG \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=$SONAR_TOKEN
+
+  # Job 7: Deploy to Azure Web App
   deploy:
     needs: delivery  # Asegura que este job solo se ejecute después de que el trabajo 'delivery' se complete con éxito.
     runs-on: ubuntu-latest
@@ -134,7 +161,7 @@ jobs:
           app-name: unachattt  # Cambia esto por el nombre de tu aplicación en Azure
           images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
 
-  # Job 7: Deploy to Staging Environment
+  # Job 8: Deploy to Staging Environment
   staging:
     needs: deploy  # Asegura que este job solo se ejecute después de que el trabajo 'deploy' se complete con éxito.
     runs-on: ubuntu-latest
@@ -154,7 +181,7 @@ jobs:
           app-name: unachattt-staging  # Cambia esto por el nombre de tu aplicación en el entorno de staging
           images: ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest  # Imagen Docker que se creó en el paso anterior
 
-  # Job 8: Run Nuclei Scanning
+  # Job 9: Run Nuclei Scanning
   nuclei:
    needs: staging
    runs-on: ubuntu-latest
