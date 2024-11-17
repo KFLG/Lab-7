@@ -72,18 +72,19 @@ jobs:
 
   # Job 4: Scan Docker Image for Vulnerabilities
   scan:
-    needs: delivery
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Trivy
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo bash
-          trivy --version  # Verifica la instalación
+   needs: delivery
+   runs-on: ubuntu-latest
+   steps:
+    - name: Install Trivy
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget
+        wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo bash
+        sudo mv ./bin/trivy /usr/local/bin/  # Mueve el binario a un directorio en el PATH
+        trivy --version  # Verifica la instalación
 
-      - name: Scan Docker image with Trivy
-        run: trivy image ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
+    - name: Scan Docker image with Trivy
+      run: trivy image ${{ secrets.DOCKER_USERNAME }}/infosec-chat:latest
 
   # Job 5: CodeQL (SAST - Static Code Analysis)
   codeql:
