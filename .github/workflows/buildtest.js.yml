@@ -138,17 +138,17 @@ jobs:
     - name: Run tests with coverage
       run: npm test -- --coverage --coverageReporters=xml
 
-    # Paso 4: Descargar el cliente de DeepSource
+    # Paso 4: Descargar e instalar el CLI de DeepSource
     - name: Install DeepSource CLI
       run: |
         curl https://deepsource.io/cli | sh
-        sudo mv ./bin/deepsource /usr/local/bin/  # Mueve el binario al PATH
+        sudo mv ./bin/deepsource /usr/local/bin/deepsource
+        deepsource --help  # Verificar instalación
 
     # Paso 5: Reportar cobertura de pruebas a DeepSource
     - name: Report test coverage to DeepSource
       run: |
-        ./bin/deepsource report --analyzer test-coverage --key javascript --value-file coverage.xml
-
+        deepsource report --analyzer test-coverage --key javascript --value-file coverage.xml
 
   # Job 7: Deploy to Azure Web App
   deploy:
