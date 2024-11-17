@@ -116,16 +116,22 @@ jobs:
 
   # Job 6: DeepSource Analysis
   deepsource:
-    needs: codeql
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+   needs: codeql
+   runs-on: ubuntu-latest
+   steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Run DeepSource Analysis
-        run: |
-          curl https://deepsource.io/cli | sh
-          ./bin/deepsource report --dsn ${{ secrets.DEEPSOURCE_DSN }}
+    - name: Install DeepSource CLI
+      run: |
+        curl https://deepsource.io/cli | sh
+
+    - name: Run DeepSource Analysis
+      env:
+        DEEPSOURCE_DSN: ${{ secrets.DEEPSOURCE_DSN }}
+      run: |
+        ./bin/deepsource analyze
+
 
   # Job 7: Deploy to Azure Web App
   deploy:
