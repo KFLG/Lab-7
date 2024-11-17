@@ -72,15 +72,15 @@ jobs:
 
   # Job 4: Scan Docker Image for Vulnerabilities
   scan:
-    needs: delivery  # Asegura que el escaneo se ejecute después de que la imagen Docker se haya creado
+    needs: delivery
     runs-on: ubuntu-latest
     steps:
       - name: Install Trivy
         run: |
           sudo apt-get update
           sudo apt-get install -y wget
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.56.2_Linux-64bit.deb  # Actualiza esta línea a la versión correcta
-          sudo dpkg -i trivy_0.56.2_Linux-64bit.deb
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_Linux-64bit.deb
+          sudo dpkg -i trivy_Linux-64bit.deb
           trivy --version  # Verifica la instalación
 
       - name: Scan Docker image with Trivy
