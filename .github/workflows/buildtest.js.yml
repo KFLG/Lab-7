@@ -120,11 +120,9 @@ jobs:
    runs-on: ubuntu-latest
 
    steps:
-    # Paso 1: Checkout del código
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Paso 2: Instalar dependencias
     - name: Install Node.js dependencies
       uses: actions/setup-node@v4
       with:
@@ -134,22 +132,27 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    # Paso 3: Ejecutar pruebas y generar cobertura
     - name: Run tests with coverage
       run: npm test -- --coverage --coverageReporters=xml
 
-    # Paso 4: Mover el archivo de cobertura si es necesario
-    - name: Move coverage file
-      run: mv coverage/coverage.xml .
+    - name: Debug directory structure
+      run: ls -R
 
-    # Paso 5: Instalar CLI de DeepSource
+    - name: Move coverage file (if exists)
+      run: |
+        if [ -f coverage/coverage.xml ]; then
+          mv coverage/coverage.xml .
+        else
+          echo "Coverage file not found."
+          exit 1
+        fi
+
     - name: Install DeepSource CLI
       run: |
         curl https://deepsource.io/cli | sh
         sudo mv ./bin/deepsource /usr/local/bin/deepsource
         deepsource --help  # Verificar instalación
 
-    # Paso 6: Reportar cobertura a DeepSource
     - name: Report test coverage to DeepSource
       env:
         DEEPSOURCE_DSN: ${{ secrets.DEEPSOURCE_DSN }}
