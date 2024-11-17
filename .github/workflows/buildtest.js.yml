@@ -126,12 +126,15 @@ jobs:
       run: |
         curl https://deepsource.io/cli | sh
 
+    - name: Verify DeepSource CLI Installation
+      run: |
+        ./bin/deepsource help
+
     - name: Run DeepSource Analysis
       env:
         DEEPSOURCE_DSN: ${{ secrets.DEEPSOURCE_DSN }}
       run: |
-        ./bin/deepsource analyze
-
+        ./bin/deepsource test
 
   # Job 7: Deploy to Azure Web App
   deploy:
