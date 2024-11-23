@@ -98,19 +98,22 @@ jobs:
       security-events: write
     strategy:
       matrix:
+        #El array de lenguajes, permite la escalabilidad, en el se pueden agregar los lenguajes presentes en el repositorio
+        #O hacer este job implementable en otro repo 
         language: [ 'javascript' ]
     steps:
+        #Clona el repo para tener una copia y hacer sobre el los escanieos
       - name: Checkout repository
         uses: actions/checkout@v4
-
+        #Inicializa codeql
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
-
+        #El autobuild es un intento de compilacion del codigo por parte de codeql
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
-
+        #Ejecuta los querys basicos predefinidos para un analisis rapido
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
