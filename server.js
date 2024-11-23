@@ -1,6 +1,6 @@
 "use strict";
 
-// Imports
+// Import
 import express from 'express';
 import session from 'express-session';
 import oktaPkg from '@okta/oidc-middleware';
